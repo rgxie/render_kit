@@ -1,12 +1,10 @@
-# Stanford Shapenet Renderer
+# obj Renderer
+
+[cite]<git@github.com:panmari/stanford-shapenet-renderer.git>
 
 A little helper script to render .obj files (such as from the stanford shapenet database) with Blender.
 
-Tested on Linux, but should also work for other operating systems.
-By default, this scripts generates 30 images by rotating the camera around the object.
-Additionally, depth, albedo, normal and id maps are dumped for every image.
-
-Tested with Blender 2.9
+Tested with Blender 3.0
 
 ## Example invocation
 
@@ -26,12 +24,3 @@ To speed up the process, you can also use xargs to have multiple blender instanc
 
     find . -name *.obj -print0 | xargs -0 -n1 -P3 -I {} blender --background --python render_blender.py -- --output_folder /tmp {}
 
-## Example images
-
-Here is one chair model rendered with 30 different views:
-
-![Chairs](examples/out_without_specular.png)
-
-or a teapot with all available outputs
-
-![Teapots](examples/teapot_all_outputs.jpg)
