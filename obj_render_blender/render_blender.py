@@ -53,6 +53,29 @@ def camera_info(param):
 
     print(camX, camY, camZ)
     return camX, camY , camZ
+
+
+def normalize_obj(obj):
+    maxP = [-9999999,-999999,-999999]
+    minP= [9999999,999999,999999]
+    for vert in obj.data.vertices:
+        p=vert.co
+        minP[0] = p[0] if p[0] < minP[0] else minP[0]
+        minP[1] = p[1] if p[1] < minP[1] else minP[1]
+        minP[2]= p[2] if p[2] < minP[2] else minP[2]
+        maxP[0]= p[0] if p[0] > maxP[0] else maxP[0]
+        maxP[1] = p[1] if p[1] > maxP[1] else maxP[1]
+        maxP[2]= p[2] if p[2] > maxP[2] else maxP[2]
+    box_len = maxP[0] - minP[0]
+    if box_len < (maxP[1] - minP[1]):
+        box_len = maxP[1] - minP[1]
+    if box_len < (maxP[2] - minP[2]):
+        box_len = maxP[2] - minP[2]
+    for vert in obj.data.vertices:
+        vert.co[0] = (vert.co[0] - minP[0]) * 2 / box_len - 1
+        vert.co[1] = (vert.co[1] - minP[1]) * 2 / box_len - 1
+        vert.co[2] = (vert.co[2] - minP[2]) * 2 / box_len - 1
+
 # Set up rendering
 context = bpy.context
 scene = bpy.context.scene
@@ -103,11 +126,37 @@ bpy.ops.object.delete()
 # Import textured mesh
 bpy.ops.object.select_all(action='DESELECT')
 
-bpy.ops.import_scene.obj(filepath=args.obj)
+
+file_extension=os.path.split(args.obj)[1].split('.')[-1]
+if file_extension == 'fbx':
+    bpy.ops.import_scene.fbx(filepath=args.obj)
+elif file_extension == 'obj':
+    bpy.ops.import_scene.obj(filepath=args.obj)
+else:
+    print('obj file type don\'t supported!')
+    sys.exit(0)
+
+
 
 obj = bpy.context.selected_objects[0]
 
 context.view_layer.objects.active = obj
+
+
+# max_dimension=max(obj.dimensions[0],obj.dimensions[1],obj.dimensions[2])
+# scale_factor=2/max_dimension
+# obj.scale = obj.scale*scale_factor
+# obj.location = (0,0,0)
+
+# for vert in obj.data.vertices:
+#     print(vert.co)
+
+normalize_obj(obj)
+obj.scale = (1,1,1)
+obj.location = (0,0,0)
+
+# for vert in obj.data.vertices:
+#     print(vert.co)
 
 # Possibly disable specular shading
 for slot in obj.material_slots:
@@ -156,13 +205,13 @@ cam_constraint.target = cam_empty
 stepsize = 360.0 / args.views
 rotation_mode = 'XYZ'
 
-#模型存放的上级目录
+#get the dir with objs 
 model_identifier = os.path.split(os.path.split(args.obj)[0])[1]
 
-file_name=args.obj.split('/')[-1]
+file_name=args.obj.split('\\')[-1]
 file_name=file_name.split('.')[0]
 
-fp = os.path.join(os.path.abspath(args.output_folder),model_identifier, file_name)
+fp = os.path.join(os.path.abspath(args.output_folder), file_name)
 
 current_rot_value = 0
 metastring = ""
@@ -170,22 +219,22 @@ for i in range(0, args.views):
     angle_rand = np.random.rand(3)
     theta = current_rot_value
     phi = 45
-    dist = 4
-    param = [theta, phi , dist, 1.75]
+    dist = 6
+    param = [theta, phi , dist, 1]
     camX, camY, camZ = camera_info(param)
     cam.location = (camX, camY, camZ)
     print("Rotation {}, {}".format((stepsize * i), math.radians(stepsize * i)))
 
-    render_file_path = fp +"shade/"+'shade_r_{0:03d}'.format(int(i * stepsize))
+    render_file_path = fp +"\\shade\\"+'shade_r_{0:03d}'.format(int(i * stepsize))
 
     scene.render.filepath = render_file_path
-    albedo_file_output.file_slots[0].path = fp +"albedo/"+ 'albedo_r_{0:03d}'.format(int(i * stepsize))
+    albedo_file_output.file_slots[0].path = fp +"\\albedo\\"+ 'albedo_r_{0:03d}'.format(int(i * stepsize))
 
     bpy.ops.render.render(write_still=True)  # render still
 
     metastring = metastring + "{} {} {} {} {} \n" \
                      .format(theta, phi, 0, dist, 35,)
     current_rot_value += stepsize
-meta_data_path = os.path.join(os.path.abspath(args.output_folder), model_identifier, file_name)                 
-with open(meta_data_path+"/rendering_metadata.txt", "w") as f:
+#meta_data_path = os.path.join(os.path.abspath(args.output_folder), file_name)                 
+with open(fp+"\\rendering_metadata.txt", "w") as f:
         f.write(metastring)
