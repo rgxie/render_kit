@@ -56,8 +56,8 @@ def camera_info(param):
 
 
 def normalize_obj(obj):
-    maxP = [-9999999,-999999,-999999]
-    minP= [9999999,999999,999999]
+    maxP = [-9999999,-9999999,-9999999]
+    minP= [9999999,9999999,9999999]
     for vert in obj.data.vertices:
         p=vert.co
         minP[0] = p[0] if p[0] < minP[0] else minP[0]
@@ -71,10 +71,14 @@ def normalize_obj(obj):
         box_len = maxP[1] - minP[1]
     if box_len < (maxP[2] - minP[2]):
         box_len = maxP[2] - minP[2]
+    x_len=maxP[0] - minP[0]
+    y_len=maxP[1] - minP[1]
+    z_len=maxP[2] - minP[2]
     for vert in obj.data.vertices:
-        vert.co[0] = (vert.co[0] - minP[0]) * 2 / box_len - 1
-        vert.co[1] = (vert.co[1] - minP[1]) * 2 / box_len - 1
-        vert.co[2] = (vert.co[2] - minP[2]) * 2 / box_len - 1
+        vert.co[0] = (vert.co[0] - minP[0]) * 2 / box_len - x_len/box_len
+        vert.co[1] = (vert.co[1] - minP[1]) * 2 / box_len - y_len/box_len
+        vert.co[2] = (vert.co[2] - minP[2]) * 2 / box_len - z_len/box_len
+    
 
 # Set up rendering
 context = bpy.context
@@ -148,15 +152,14 @@ context.view_layer.objects.active = obj
 # obj.scale = obj.scale*scale_factor
 # obj.location = (0,0,0)
 
-# for vert in obj.data.vertices:
-#     print(vert.co)
-
+for vert in obj.data.vertices:
+    print(vert.co)
 normalize_obj(obj)
 obj.scale = (1,1,1)
 obj.location = (0,0,0)
 
-# for vert in obj.data.vertices:
-#     print(vert.co)
+for vert in obj.data.vertices:
+    print(vert.co)
 
 # Possibly disable specular shading
 for slot in obj.material_slots:
